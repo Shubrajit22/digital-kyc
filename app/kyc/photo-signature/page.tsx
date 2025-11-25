@@ -57,7 +57,7 @@ export default function PhotoSignaturePage() {
     fd.append("signature", files.signature as File);
     fd.append("fullName", details.fullName || "");
 
-    const res = await fetch("/api/kyc/validate-photo-sign", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/kyc/validate-photo-sign`, {
       method: "POST",
       body: fd,
     });

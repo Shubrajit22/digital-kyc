@@ -44,7 +44,7 @@ export default function ReviewPage() {
   fd.append("photo", files.photo as File);
   fd.append("signature", files.signature as File);
 
-  const res = await fetch("/api/kyc/submit", {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/kyc/submit`, {
     method: "POST",
     body: fd,
   });
