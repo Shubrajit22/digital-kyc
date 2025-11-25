@@ -16,33 +16,33 @@ export default function BasicDetailsPage() {
   };
 
   return (
-    <main className="min-h-screen pt-6 px-4 md:px-0 bg-gradient-to-br from-slate-50 to-blue-50">
+    <main className="min-h-screen pt-6 pb-12 px-4 sm:px-6 lg:px-0 bg-gradient-to-br from-slate-50 to-blue-50">
       <Steps current={1} />
 
-      <div className="max-w-3xl mx-auto mt-6 bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-xl p-8 md:p-10 space-y-10 transition-all animate-fadeUp">
+      <div className="max-w-3xl mx-auto mt-6 bg-white/80 backdrop-blur-xl 
+      border border-slate-200 rounded-3xl shadow-xl p-6 sm:p-8 md:p-10 
+      space-y-10 transition-all animate-fadeUp">
 
-        {/* --- HEADER --- */}
-        <header className="text-center space-y-3">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+        {/* HEADER */}
+        <header className="text-center space-y-3 px-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
             Basic Details
           </h2>
-          <p className="text-sm md:text-base text-slate-600 max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
             Please enter your personal information exactly as shown on your
             official documents. This ensures smooth and accurate verification.
           </p>
         </header>
 
-        {/* --- FORM SECTION --- */}
+        {/* FORM */}
         <form onSubmit={onSubmit} className="space-y-8">
 
           {/* FULL NAME */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
-              Full Name
-            </label>
+            <label className="text-sm font-medium text-slate-700">Full Name</label>
             <input
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 
-              text-sm md:text-base text-slate-900 shadow-sm
+              text-sm sm:text-base text-slate-900 shadow-sm
               focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
               value={details.fullName}
               onChange={(e) => setDetails({ ...details, fullName: e.target.value })}
@@ -52,16 +52,15 @@ export default function BasicDetailsPage() {
           </div>
 
           {/* EMAIL + PHONE */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+            {/* EMAIL */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Email Address
-              </label>
+              <label className="text-sm font-medium text-slate-700">Email Address</label>
               <input
                 type="email"
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 
-                text-sm md:text-base text-slate-900 shadow-sm
+                text-sm sm:text-base text-slate-900 shadow-sm
                 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                 value={details.email}
                 onChange={(e) => setDetails({ ...details, email: e.target.value })}
@@ -70,14 +69,13 @@ export default function BasicDetailsPage() {
               />
             </div>
 
+            {/* PHONE */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Mobile Number
-              </label>
+              <label className="text-sm font-medium text-slate-700">Mobile Number</label>
               <input
                 type="tel"
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 
-                text-sm md:text-base text-slate-900 shadow-sm
+                text-sm sm:text-base text-slate-900 shadow-sm
                 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                 value={details.phone}
                 onChange={(e) => setDetails({ ...details, phone: e.target.value })}
@@ -88,16 +86,16 @@ export default function BasicDetailsPage() {
 
           </div>
 
-          {/* SUBMIT */}
+          {/* SUBMIT BUTTON */}
           <div className="flex justify-end pt-4">
             <button
               type="submit"
               className="inline-flex items-center justify-center rounded-2xl 
               bg-gradient-to-r from-blue-600 to-blue-700 
-              hover:from-blue-500 hover:to-blue-600 
-              px-8 py-3 text-sm md:text-base font-semibold text-white 
+              hover:from-blue-500 hover:to-blue-600 px-8 py-3 
+              text-sm sm:text-base font-semibold text-white 
               shadow-md hover:shadow-xl active:scale-[0.97] 
-              transition-all cursor-pointer"
+              transition-all cursor-pointer w-full sm:w-auto"
             >
               Save & Continue →
             </button>

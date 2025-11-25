@@ -13,8 +13,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white">
-        {children}
+      <body
+        className="
+          min-h-screen 
+          bg-white 
+          antialiased 
+          text-slate-900 
+          overflow-x-hidden
+        "
+      >
+        <div className="w-full min-h-screen">{children}</div>
       </body>
     </html>
   );

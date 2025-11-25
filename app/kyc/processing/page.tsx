@@ -5,7 +5,13 @@ import { useSearchParams } from "next/navigation";
 
 export default function ProcessingPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center text-lg sm:text-xl">
+          Loading...
+        </div>
+      }
+    >
       <ProcessingContent />
     </Suspense>
   );
@@ -16,10 +22,13 @@ function ProcessingContent() {
   const status = params.get("status") || "processing";
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white shadow-xl rounded-full p-6 mb-4 animate-pulse">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4
+    bg-gradient-to-br from-blue-50 to-indigo-100">
+
+      {/* Icon */}
+      <div className="bg-white shadow-xl rounded-full p-4 sm:p-6 mb-4 animate-pulse">
         <svg
-          className="w-20 h-20 text-indigo-500 animate-spin"
+          className="w-16 h-16 sm:w-20 sm:h-20 text-indigo-500 animate-spin"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
@@ -30,13 +39,18 @@ function ProcessingContent() {
         </svg>
       </div>
 
-      <h1 className="text-4xl font-bold text-indigo-700">Processing KYC… ⚙️</h1>
+      {/* Title */}
+      <h1 className="text-2xl sm:text-4xl font-bold text-indigo-700 text-center">
+        Processing KYC… ⚙️
+      </h1>
 
-      <p className="text-gray-700 mt-3 text-center max-w-md">
+      {/* Description */}
+      <p className="text-gray-700 mt-3 text-center max-w-md text-sm sm:text-base">
         Please wait while we verify your details.
       </p>
 
-      <p className="mt-2 text-sm text-gray-600 italic">
+      {/* Status */}
+      <p className="mt-2 text-xs sm:text-sm text-gray-600 italic text-center">
         Status: {status.replace(/-/g, " ")}
       </p>
     </div>

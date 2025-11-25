@@ -13,37 +13,46 @@ export default function Steps({ current }: StepsProps) {
     { id: 5, label: "Review & Submit" },
   ];
 
-  // Percentage fill for blue progress
   const progress = ((current - 1) / (steps.length - 1)) * 100;
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
-      <div className="bg-white shadow-xl rounded-2xl p-8 relative overflow-hidden">
+    <div className="max-w-4xl mx-auto px-2 sm:px-4">
+      <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6 md:p-8 relative overflow-visible">
 
-        {/* LINE WRAPPER */}
-        <div className="absolute inset-x-12 top-[48px] h-[4px] bg-gray-200 rounded-full overflow-hidden">
-          {/* Blue dynamic fill */}
+        {/* PROGRESS LINE */}
+        <div
+          className="
+            absolute 
+            left-6 right-6 
+            top-[46px] 
+            sm:top-[48px] 
+            h-[3px] sm:h-[4px] 
+            bg-gray-200 
+            rounded-full 
+            overflow-hidden
+          "
+        >
           <div
             className="h-full bg-blue-600 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* STEPS */}
-        <div className="flex justify-between relative z-10">
+        {/* STEP CIRCLES */}
+        <div className="flex justify-between items-start sm:items-center relative z-10 pt-4 sm:pt-0">
 
           {steps.map((step) => {
             const isCompleted = step.id < current;
             const isCurrent = step.id === current;
 
             return (
-              <div key={step.id} className="flex flex-col items-center">
-
+              <div key={step.id} className="flex flex-col items-center w-[20%] text-center">
+                
                 {/* CIRCLE */}
                 {isCompleted ? (
-                  <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
                     <svg
-                      className="w-6 h-6 text-white"
+                      className="w-4 h-4 sm:w-6 sm:h-6 text-white"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="3"
@@ -53,28 +62,27 @@ export default function Steps({ current }: StepsProps) {
                     </svg>
                   </div>
                 ) : isCurrent ? (
-                  <div className="w-12 h-12 rounded-full bg-blue-600 relative flex items-center justify-center shadow-md">
-                    <div className="absolute -inset-1 rounded-full border-[6px] border-blue-300 opacity-50"></div>
-                    <span className="text-white font-bold">{step.id}</span>
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-blue-600 relative flex items-center justify-center shadow-md">
+                    <div className="absolute -inset-1 rounded-full border-[4px] sm:border-[6px] border-blue-300 opacity-50"></div>
+                    <span className="text-white text-sm sm:text-base font-bold">{step.id}</span>
                   </div>
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
-                    <span className="text-gray-600 font-semibold">{step.id}</span>
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
+                    <span className="text-gray-600 text-sm sm:text-base font-semibold">{step.id}</span>
                   </div>
                 )}
 
                 {/* LABEL */}
                 <p
-                  className={`mt-2 text-sm font-medium ${
-                    isCompleted || isCurrent ? "text-blue-700" : "text-slate-500"
-                  }`}
+                  className={`mt-2 text-xs sm:text-sm font-medium break-words leading-tight px-1
+                    ${isCompleted || isCurrent ? "text-blue-700" : "text-slate-500"}
+                  `}
                 >
                   {step.label}
                 </p>
               </div>
             );
           })}
-
         </div>
       </div>
     </div>
