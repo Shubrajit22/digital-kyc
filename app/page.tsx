@@ -5,7 +5,7 @@ import { CheckBadgeIcon, CameraIcon, DocumentTextIcon, PencilSquareIcon } from '
 
 export default function LandingPage() {
   const router = useRouter();
-
+ //@ts-ignore
   // Helper component for the requirement checklist item
   const RequirementItem = ({ icon: Icon, text }) => (
     <div className="flex items-center space-x-3">
