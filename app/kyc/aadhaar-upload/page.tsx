@@ -63,7 +63,7 @@ export default function AadhaarUploadPage() {
     fd.append("aadhaarBack", files.aadhaarBack as File);
     fd.append("fullName", details.fullName || "");
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/kyc/validate-aadhaar`, {
+    const res = await fetch(`/api/kyc/validate-aadhaar`, {
       method: "POST",
       body: fd,
     });
