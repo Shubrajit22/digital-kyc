@@ -1,58 +1,104 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useKyc } from "../KycContext";
 
 export default function ProcessingPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-screen flex items-center justify-center text-lg sm:text-xl">
-          Loading...
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>
       }
     >
-      <ProcessingContent />
+      <ProcessingInner />
     </Suspense>
   );
 }
 
-function ProcessingContent() {
+function ProcessingInner() {
+  const router = useRouter();
   const params = useSearchParams();
-  const status = params.get("status") || "processing";
+  const { details, files } = useKyc();
+  const [message, setMessage] = useState("Submitting your details…");
+
+  useEffect(() => {
+    async function submitKyc() {
+      try {
+        // ❌ Missing required data? → ERROR PAGE
+        if (
+          !details.fullName ||
+          !details.email ||
+          !details.phone ||
+          !details.panNumber ||
+          !details.aadhaarNumber ||
+          !files.pan ||
+          !files.aadhaarFront ||
+          !files.aadhaarBack ||
+          !files.photo ||
+          !files.signature
+        ) {
+          router.replace("/kyc/error?reason=missing-data");
+          return;
+        }
+
+        // Build FormData
+        const fd = new FormData();
+        fd.append("fullName", details.fullName);
+        fd.append("email", details.email);
+        fd.append("phone", details.phone);
+        fd.append("panNumber", details.panNumber);
+        fd.append("aadhaarNumber", details.aadhaarNumber);
+
+        fd.append("panFile", files.pan);
+        fd.append("aadhaarFront", files.aadhaarFront);
+        fd.append("aadhaarBack", files.aadhaarBack);
+        fd.append("photo", files.photo);
+        fd.append("signature", files.signature);
+
+        // Submit to backend
+        const res = await fetch("/api/kyc/submit", {
+          method: "POST",
+          body: fd,
+        });
+
+        const data = await res.json();
+
+        // ✅ DB save success → SUCCESS PAGE
+        if (data.ok && data.appId) {
+          router.replace(`/kyc/success?ref=${data.appId}`);
+          return;
+        }
+
+        // ❌ DB save failed → ERROR PAGE
+        router.replace(`/kyc/error?reason=submit-failed`);
+      } catch (err) {
+        console.error("Processing error:", err);
+        router.replace(`/kyc/error?reason=network-error`);
+      }
+    }
+
+    submitKyc();
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4
-    bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100 px-4 text-center">
 
-      {/* Icon */}
-      <div className="bg-white shadow-xl rounded-full p-4 sm:p-6 mb-4 animate-pulse">
-        <svg
-          className="w-16 h-16 sm:w-20 sm:h-20 text-indigo-500 animate-spin"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          viewBox="0 0 24 24"
-        >
-          <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
-          <path d="M12 2a10 10 0 0 1 10 10" />
-        </svg>
+      <div className="bg-white rounded-2xl shadow-xl px-8 py-10 max-w-md w-full space-y-4">
+
+        <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+
+        <h1 className="text-lg sm:text-xl font-semibold text-slate-800">
+          Processing Your KYC…
+        </h1>
+
+        <p className="text-sm text-slate-600">{message}</p>
+
+        <p className="text-xs text-slate-400">Please do not refresh the page.</p>
       </div>
 
-      {/* Title */}
-      <h1 className="text-2xl sm:text-4xl font-bold text-indigo-700 text-center">
-        Processing KYC… ⚙️
-      </h1>
-
-      {/* Description */}
-      <p className="text-gray-700 mt-3 text-center max-w-md text-sm sm:text-base">
-        Please wait while we verify your details.
-      </p>
-
-      {/* Status */}
-      <p className="mt-2 text-xs sm:text-sm text-gray-600 italic text-center">
-        Status: {status.replace(/-/g, " ")}
-      </p>
-    </div>
+    </main>
   );
 }

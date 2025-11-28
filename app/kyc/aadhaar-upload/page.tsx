@@ -7,38 +7,63 @@ import { useKyc } from "../KycContext";
 
 export default function AadhaarUploadPage() {
   const router = useRouter();
-  const { files, setFiles, details, setDetails, setStepCompleted } = useKyc();
+  const {
+    files,
+    setFiles,
+    details,
+    setDetails,
+    setStepCompleted,
+    attempts,
+    increaseAttempt,
+    resetAttempts,
+  } = useKyc();
 
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const onFrontChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const validateFile = (file: File | null | undefined) => {
+    if (!file) return false;
+    if (file.size > 5 * 1024 * 1024) return false;
+    return true;
+  };
+
+  const handleFrontChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
     if (!file) return;
+
+    if (!validateFile(file)) {
+      setError("❌ Front side file is too large. Max 5MB allowed.");
+      return;
+    }
+
     setFiles({ ...files, aadhaarFront: file });
-    file.type.startsWith("image/")
-      ? setFrontPreview(URL.createObjectURL(file))
-      : setFrontPreview(null);
+    setFrontPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+    setError(null);
   };
 
-  const onBackChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleBackChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
     if (!file) return;
+
+    if (!validateFile(file)) {
+      setError("❌ Back side file is too large. Max 5MB allowed.");
+      return;
+    }
+
     setFiles({ ...files, aadhaarBack: file });
-    file.type.startsWith("image/")
-      ? setBackPreview(URL.createObjectURL(file))
-      : setBackPreview(null);
+    setBackPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+    setError(null);
   };
 
+  const aadhaarLen = details.aadhaarNumber?.length ?? 0;
   const canNext =
-    details.aadhaarNumber?.length === 12 &&
-    files.aadhaarFront &&
-    files.aadhaarBack;
+    aadhaarLen === 12 && !!files.aadhaarFront && !!files.aadhaarBack && !loading;
 
-  const next = async () => {
+  const handleNext = async () => {
     if (!canNext) return;
+
     setLoading(true);
     setError(null);
 
@@ -48,45 +73,87 @@ export default function AadhaarUploadPage() {
     fd.append("aadhaarBack", files.aadhaarBack as File);
     fd.append("fullName", details.fullName || "");
 
-    const res = await fetch(`/api/kyc/validate-aadhaar`, {
-      method: "POST",
-      body: fd,
-    });
+    let data: any;
 
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/kyc/validate-aadhaar", {
+        method: "POST",
+        body: fd,
+      });
+      data = await res.json();
+    } catch (e) {
+      setLoading(false);
+      setError("❌ Network error while validating Aadhaar. Please try again.");
+      return;
+    }
+
     setLoading(false);
 
-    if (!data.ok) {
+    // 1️⃣ Backend validation fails
+    if (!data?.ok) {
+      increaseAttempt();
+
+      if (attempts + 1 >= 5) {
+        resetAttempts();
+        alert("❌ You have exceeded the maximum number of attempts. Please try again later.");
+        router.push("/");
+        return;
+      }
+
+      let message = data.message || "❌ Aadhaar validation failed.";
+
+      const reason = (data.reason || "").toString().toLowerCase();
+      if (reason.includes("number")) {
+        message = "❌ Aadhaar number does not match the Aadhaar card.";
+      } else if (reason.includes("name")) {
+        message = "❌ The name on the Aadhaar card does not match the entered name.";
+      }
+
+      setError(message);
+      return;
+    }
+
+    // 2️⃣ Extra name safety using extractedName
+    const extractedName = data.extractedName?.trim()?.toLowerCase();
+    const userName = details.fullName?.trim()?.toLowerCase();
+
+    if (extractedName && userName && extractedName !== userName) {
+      increaseAttempt();
+
+      if (attempts + 1 >= 5) {
+        resetAttempts();
+        alert("❌ You have exceeded the maximum number of attempts. Please try again later.");
+        router.push("/");
+        return;
+      }
+
       setError(
-        data.message || "Aadhaar validation failed. Please re-upload."
+        `❌ Name mismatch detected!
+Aadhaar Name: ${data.extractedName}
+Entered Name: ${details.fullName}`
       );
       return;
     }
 
+    // ✅ Success
     setStepCompleted(3);
     router.push("/kyc/photo-signature");
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#EEF4FF] to-white pb-14 px-4 sm:px-6">
-
-      {/* Heading */}
-      <div className="text-center py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-          Complete Your KYC
-        </h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Secure and Simple Verification Process
-        </p>
+      {/* Header */}
+      <div className="text-center py-6 space-y-1">
+        <h1 className="text-3xl font-bold text-slate-900">Complete Your KYC</h1>
+        <p className="text-slate-500 text-sm">Secure and Simple Verification Process</p>
       </div>
 
       <Steps current={3} />
 
-      {/* Main Card */}
-      <div className="max-w-3xl mx-auto mt-6 bg-white rounded-2xl border border-slate-200 shadow-xl p-6 sm:p-8 md:p-10 space-y-10">
-
-        {/* Title */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      {/* Outer Card */}
+      <div className="max-w-4xl mx-auto mt-10 bg-white rounded-3xl shadow-xl border border-slate-200 p-10 space-y-8">
+        {/* Section Header */}
+        <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-blue-600 text-white grid place-items-center rounded-xl shadow">
             <svg
               className="w-6 h-6"
@@ -104,14 +171,14 @@ export default function AadhaarUploadPage() {
           </h2>
         </div>
 
-        <p className="text-sm text-slate-600 -mt-3">
+        <p className="text-sm text-slate-600 -mt-2">
           Upload both front and back side of your Aadhaar card
         </p>
 
         {/* Aadhaar Number */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">
-            Aadhaar Number *
+            Aadhaar Number <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -124,163 +191,170 @@ export default function AadhaarUploadPage() {
               })
             }
             placeholder="Enter 12-digit Aadhaar number"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 
-            focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition"
+            className="w-full rounded-2xl border border-slate-300 bg-gray-50 px-4 py-3 
+              text-slate-900 shadow-sm focus:border-blue-500 focus:ring-2 
+              focus:ring-blue-200 outline-none transition"
           />
         </div>
 
-        {/* Uploads Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Front Upload */}
+        <div>
+          <label className="text-sm font-medium text-slate-700">
+            Aadhaar Front Side <span className="text-red-500">*</span>
+          </label>
 
-          {/* Front Upload */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">
-              Aadhaar Front Side *
-            </label>
+          <label
+            className="block mt-2 w-full rounded-2xl border-2 border-dashed border-blue-300 
+              bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition p-10 text-center"
+          >
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleFrontChange}
+            />
 
-            <label className="block mt-2 w-full rounded-2xl border-2 border-dashed border-blue-300 
-            bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition p-8 sm:p-10 text-center">
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                className="hidden"
-                onChange={onFrontChange}
-              />
-
-              <div className="flex flex-col items-center space-y-3">
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 grid place-items-center rounded-full">
-                  <svg
-                    className="w-7 h-7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
-                  </svg>
-                </div>
-
-                {files.aadhaarFront ? (
-                  <span className="font-medium text-blue-600">
-                    {files.aadhaarFront.name}
-                  </span>
-                ) : (
-                  <>
-                    <span className="font-semibold text-slate-700">
-                      Click to upload front side
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      JPEG, PNG or PDF (Max 5MB)
-                    </span>
-                  </>
-                )}
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-4 bg-blue-100 text-blue-600 rounded-full inline-flex items-center justify-center mb-3">
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12"
+                  />
+                </svg>
               </div>
-            </label>
 
-            {frontPreview && (
-              <img
-                src={frontPreview}
-                className="max-h-48 sm:max-h-64 w-full rounded-xl border border-slate-200 shadow-md object-contain mt-3"
-              />
-            )}
-          </div>
-
-          {/* Back Upload */}
-          <div>
-            <label className="text-sm font-medium text-slate-700">
-              Aadhaar Back Side *
-            </label>
-
-            <label className="block mt-2 w-full rounded-2xl border-2 border-dashed border-blue-300 
-            bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition p-8 sm:p-10 text-center">
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                className="hidden"
-                onChange={onBackChange}
-              />
-
-              <div className="flex flex-col items-center space-y-3">
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 grid place-items-center rounded-full">
-                  <svg
-                    className="w-7 h-7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
-                  </svg>
-                </div>
-
-                {files.aadhaarBack ? (
-                  <span className="font-medium text-blue-600">
-                    {files.aadhaarBack.name}
+              {files.aadhaarFront ? (
+                <span className="text-blue-600 font-medium break-all">
+                  {files.aadhaarFront.name}
+                </span>
+              ) : (
+                <>
+                  <span className="font-medium text-slate-700">
+                    Click to upload front side
                   </span>
-                ) : (
-                  <>
-                    <span className="font-semibold text-slate-700">
-                      Click to upload back side
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      JPEG, PNG or PDF (Max 5MB)
-                    </span>
-                  </>
-                )}
-              </div>
-            </label>
+                  <span className="text-xs text-slate-500">
+                    JPEG, PNG or PDF (Max 5MB)
+                  </span>
+                </>
+              )}
+            </div>
+          </label>
 
-            {backPreview && (
-              <img
-                src={backPreview}
-                className="max-h-48 sm:max-h-64 w-full rounded-xl border border-slate-200 shadow-md object-contain mt-3"
-              />
-            )}
-          </div>
+          {frontPreview && (
+            <img
+              src={frontPreview}
+              className="mt-3 max-h-56 w-full rounded-xl border object-contain shadow"
+            />
+          )}
+        </div>
+
+        {/* Back Upload */}
+        <div>
+          <label className="text-sm font-medium text-slate-700">
+            Aadhaar Back Side <span className="text-red-500">*</span>
+          </label>
+
+          <label
+            className="block mt-2 w-full rounded-2xl border-2 border-dashed border-blue-300 
+              bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition p-10 text-center"
+          >
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleBackChange}
+            />
+
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-4 bg-blue-100 text-blue-600 rounded-full inline-flex items-center justify-center mb-3">
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12"
+                  />
+                </svg>
+              </div>
+
+              {files.aadhaarBack ? (
+                <span className="text-blue-600 font-medium break-all">
+                  {files.aadhaarBack.name}
+                </span>
+              ) : (
+                <>
+                  <span className="font-medium text-slate-700">
+                    Click to upload back side
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    JPEG, PNG or PDF (Max 5MB)
+                  </span>
+                </>
+              )}
+            </div>
+          </label>
+
+          {backPreview && (
+            <img
+              src={backPreview}
+              className="mt-3 max-h-56 w-full rounded-xl border object-contain shadow"
+            />
+          )}
         </div>
 
         {/* Error */}
         {error && (
-          <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-            ❌ {error}
+          <div className="mt-4 bg-red-50 border border-red-200 p-4 rounded-xl text-sm text-red-700">
+            {error}
+            <div className="mt-1 text-slate-600">Attempts Used: {attempts}/5</div>
           </div>
         )}
 
-        {/* Info Note */}
-        <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm">
-          <span className="font-semibold text-slate-700">Note: </span>
-          <span className="text-slate-600">
+        {/* Note */}
+        <div className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm">
+          <span className="font-semibold text-blue-700">Note: </span>
+          <span className="text-slate-700">
             Make sure your Aadhaar number is clearly visible in the uploaded images.
+            Both sides must be uploaded separately.
           </span>
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 sm:gap-0">
+        <div className="flex justify-between mt-8">
           <button
             onClick={() => router.push("/kyc/pan-upload")}
             className="px-6 py-2.5 rounded-xl border border-slate-300 bg-white 
-            text-slate-700 hover:bg-slate-50 transition shadow"
+              text-slate-700 hover:bg-slate-50 transition shadow"
           >
             ← Back
           </button>
 
           <button
-            onClick={next}
-            disabled={!canNext || loading}
-            className={`px-10 py-3 rounded-xl font-semibold shadow-md transition 
-              ${canNext && !loading
-                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600"
-                : "bg-slate-300 text-slate-500 cursor-not-allowed"
+            onClick={handleNext}
+            disabled={!canNext}
+            className={`px-10 py-3 rounded-xl font-semibold shadow transition 
+              ${
+                canNext
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
           >
-            {loading ? (
-              <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full inline-block"></span>
-            ) : (
-              <>Continue →</>
-            )}
+            {loading ? "Verifying..." : "Continue →"}
           </button>
         </div>
-
       </div>
     </main>
   );

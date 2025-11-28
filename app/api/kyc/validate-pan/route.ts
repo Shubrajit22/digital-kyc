@@ -22,10 +22,13 @@ You must verify an Indian PAN card image.
 User PAN: ${panNumber}
 User Name: ${fullName}
 
+Extract the **exact name written on the PAN card**.
+
 Return ONLY JSON:
 {
   "isPan": true/false,
   "matches": true/false,
+  "extractedName": "string",
   "reason": "string"
 }
 `;
@@ -38,16 +41,33 @@ Return ONLY JSON:
     const raw = result.response.text();
     const json = JSON.parse(cleanJSON(raw));
 
+    // --- ORIGINAL LOGIC (unchanged) ---
     if (!json.isPan)
-      return NextResponse.json({ ok: false, message: "Not a PAN card", reason: json.reason });
+      return NextResponse.json({
+        ok: false,
+        message: "Not a PAN card",
+        reason: json.reason,
+      });
 
     if (!json.matches)
-      return NextResponse.json({ ok: false, message: "PAN does not match", reason: json.reason });
+      return NextResponse.json({
+        ok: false,
+        message: "PAN does not match",
+        reason: json.reason,
+        extractedName: json.extractedName || null, // NEW
+      });
 
-    return NextResponse.json({ ok: true });
+    // Successful validation
+    return NextResponse.json({
+      ok: true,
+      extractedName: json.extractedName || null, // NEW
+    });
 
   } catch (err) {
     console.error("PAN validation error:", err);
-    return NextResponse.json({ ok: false, message: "Server error validating PAN" });
+    return NextResponse.json({
+      ok: false,
+      message: "Server error validating PAN",
+    });
   }
 }

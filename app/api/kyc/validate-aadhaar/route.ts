@@ -27,10 +27,13 @@ export async function POST(req: Request) {
 You are validating an Indian Aadhaar card using front and back images.
 User-entered Aadhaar number: ${aadhaarNumber}
 
+Extract the **name printed on the Aadhaar card**.
+
 Return ONLY valid JSON:
 {
   "isAadhaar": true/false,
   "numberMatches": true/false,
+  "extractedName": "string",
   "reason": "string"
 }
 `;
@@ -44,10 +47,12 @@ Return ONLY valid JSON:
     const raw = result.response.text();
     const json = JSON.parse(cleanJSON(raw));
 
+    // --- ORIGINAL LOGIC (unchanged) ---
     if (!json.isAadhaar) {
       return NextResponse.json({
         ok: false,
         message: json.reason || "Not a valid Aadhaar card",
+        extractedName: json.extractedName || null, // NEW
       });
     }
 
@@ -55,10 +60,16 @@ Return ONLY valid JSON:
       return NextResponse.json({
         ok: false,
         message: json.reason || "Aadhaar number does not match",
+        extractedName: json.extractedName || null, // NEW
       });
     }
 
-    return NextResponse.json({ ok: true });
+    // Success
+    return NextResponse.json({
+      ok: true,
+      extractedName: json.extractedName || null, // NEW
+    });
+
   } catch (err) {
     console.error("Aadhaar validation error:", err);
     return NextResponse.json({

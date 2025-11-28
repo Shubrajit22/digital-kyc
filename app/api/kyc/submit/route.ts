@@ -39,7 +39,6 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true, appId: saved.id });
-
   } catch (err) {
     console.error("Submit error:", err);
     return NextResponse.json({ ok: false, message: "Submit failed" });

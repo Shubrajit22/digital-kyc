@@ -7,10 +7,20 @@ import { useKyc } from "../KycContext";
 
 export default function BasicDetailsPage() {
   const router = useRouter();
-  const { details, setDetails, setStepCompleted } = useKyc();
+  const { details, setDetails, setStepCompleted, resetAttempts } = useKyc();
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    // NEW: Clean the name to avoid mismatch due to extra spaces
+    setDetails({
+      ...details,
+      fullName: details.fullName?.trim(),
+    });
+
+    // NEW: Start fresh → reset attempts
+    resetAttempts();
+
     setStepCompleted(1);
     router.push("/kyc/pan-upload");
   };
@@ -23,7 +33,6 @@ export default function BasicDetailsPage() {
       border border-slate-200 rounded-3xl shadow-xl p-6 sm:p-8 md:p-10 
       space-y-10 transition-all animate-fadeUp">
 
-        {/* HEADER */}
         <header className="text-center space-y-3 px-2">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
             Basic Details
@@ -34,10 +43,8 @@ export default function BasicDetailsPage() {
           </p>
         </header>
 
-        {/* FORM */}
         <form onSubmit={onSubmit} className="space-y-8">
 
-          {/* FULL NAME */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Full Name</label>
             <input
@@ -51,10 +58,7 @@ export default function BasicDetailsPage() {
             />
           </div>
 
-          {/* EMAIL + PHONE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* EMAIL */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Email Address</label>
               <input
@@ -69,7 +73,6 @@ export default function BasicDetailsPage() {
               />
             </div>
 
-            {/* PHONE */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Mobile Number</label>
               <input
@@ -83,10 +86,8 @@ export default function BasicDetailsPage() {
                 required
               />
             </div>
-
           </div>
 
-          {/* SUBMIT BUTTON */}
           <div className="flex justify-end pt-4">
             <button
               type="submit"

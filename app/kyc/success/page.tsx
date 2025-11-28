@@ -2,12 +2,13 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function SuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-screen flex items-center justify-center text-lg sm:text-xl">
+        <div className="h-screen flex items-center justify-center text-lg font-medium">
           Loading...
         </div>
       }
@@ -22,11 +23,10 @@ function SuccessContent() {
   const ref = params.get("ref") || "N/A";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center 
-    px-4 bg-gradient-to-br from-green-50 to-emerald-100 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4
+      bg-gradient-to-br from-green-50 via-emerald-100 to-green-50 text-center">
 
-      {/* Icon */}
-      <div className="bg-white shadow-xl rounded-full p-4 sm:p-6 mb-4 animate-pop">
+      <div className="bg-white shadow-2xl rounded-full p-5 sm:p-7 mb-4 animate-[pop_0.4s_ease-out]">
         <svg
           className="w-16 h-16 sm:w-20 sm:h-20 text-green-600"
           fill="none"
@@ -38,30 +38,26 @@ function SuccessContent() {
         </svg>
       </div>
 
-      {/* Heading */}
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-700">
-        KYC Submitted Successfully ✔️
+      <h1 className="text-3xl sm:text-4xl font-bold text-green-700 tracking-tight">
+        KYC Submitted Successfully 
       </h1>
 
-      {/* Description */}
-      <p className="text-gray-700 mt-3 max-w-md text-sm sm:text-base">
-        Your details have been submitted. Our team will verify your documents shortly.
+      <p className="text-gray-700 mt-3 max-w-md text-sm sm:text-base leading-relaxed">
+        Your KYC has been submitted successfully. Our team will review and verify 
+        your documents shortly.
       </p>
 
-      {/* Reference */}
-      <p className="mt-2 text-xs sm:text-sm text-gray-600 italic">
-        Reference ID: {ref}
+      <p className="mt-3 text-xs sm:text-sm text-gray-600 italic">
+        Reference ID: <span className="font-semibold">{ref}</span>
       </p>
 
-      {/* Button */}
-      <a
+      <Link
         href="/"
-        className="mt-6 px-6 py-3 rounded-xl shadow-lg transition-all 
-        bg-green-600 text-white hover:bg-green-700 text-sm sm:text-base"
+        className="mt-6 px-6 py-3 rounded-xl shadow-lg transition-all duration-200
+        bg-green-600 text-white hover:bg-green-700 active:scale-95 text-sm sm:text-base"
       >
         Go to Dashboard
-      </a>
-
+      </Link>
     </div>
   );
 }
