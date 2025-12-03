@@ -9,21 +9,55 @@ export default function BasicDetailsPage() {
   const router = useRouter();
   const { details, setDetails, setStepCompleted, resetAttempts } = useKyc();
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  // const onSubmit = (e: FormEvent) => {
+  //   e.preventDefault();
 
-    // NEW: Clean the name to avoid mismatch due to extra spaces
-    setDetails({
-      ...details,
-      fullName: details.fullName?.trim(),
-    });
+  //   // NEW: Clean the name to avoid mismatch due to extra spaces
+  //   setDetails({
+  //     ...details,
+  //     fullName: details.fullName?.trim(),
+  //   });
 
-    // NEW: Start fresh → reset attempts
-    resetAttempts();
+  //   // NEW: Start fresh → reset attempts
+  //   resetAttempts();
 
-    setStepCompleted(1);
-    router.push("/kyc/pan-upload");
-  };
+  //   setStepCompleted(1);
+  //   router.push("/kyc/pan-upload");
+  // };
+const onSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+
+  // Clean name
+  const fullName = details.fullName?.trim() || "";
+
+  // 1️⃣ CALL API → check duplicate from DB  
+  const res = await fetch(`/api/kyc/check-duplicate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fullName,
+      email: details.email,
+    }),
+  });
+
+  const data = await res.json();
+
+  // 2️⃣ If duplicate → redirect to "KYC Already Exists" page
+  if (data.exists) {
+    router.push(`/kyc/already-exists?ref=${data.appId}`);
+    return;
+  }
+
+  // 3️⃣ If not duplicate → save details & continue
+  setDetails({
+    ...details,
+    fullName, // trimmed
+  });
+
+  resetAttempts();
+  setStepCompleted(1);
+  router.push("/kyc/pan-upload");
+};
 
   return (
     <main className="min-h-screen pt-6 pb-12 px-4 sm:px-6 lg:px-0 bg-gradient-to-br from-slate-50 to-blue-50">
