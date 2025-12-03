@@ -127,6 +127,14 @@ This facilitates future audit or re-verification processes.
 | Deployment    | Vercel / Railway / Render           |
 
 ---
+---
+
+# Architecture Diagram
+
+<img width="1431" height="910" alt="image" src="https://github.com/user-attachments/assets/99a00afe-9dd2-48cb-95a5-d84e612df668" />
+
+
+---
 
 # Security Features
 
